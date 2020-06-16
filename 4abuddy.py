@@ -1,7 +1,8 @@
 import math
 from tkinter import *
 
-from util import GRID_WIDTH, GRID_HEIGHT, X_AXIS_TICKS
+from util import GRID_WIDTH, GRID_HEIGHT, X_AXIS_TICKS, X_AXIS_UNIT, Y_AXIS_TICKS, X_AXIS_TICK_LABEL_FREQ, \
+    Y_AXIS_TICK_LABEL_FREQ
 
 
 class ResizingCanvas(Canvas):
@@ -52,17 +53,40 @@ class App(Tk):
                                 fill='black', tag='axes', width=3)
         self.canvas.create_line(((self.canvas.width / 2) - 1, 0), ((self.canvas.width / 2) - 1, self.canvas.height),
                                 fill='black', tag='axes', width=3)
+
+        # Populate x-axis
         x_space_pixels = int((self.canvas.width / 2) / ((X_AXIS_TICKS / 2) + 1))
         for i in range(1, int(X_AXIS_TICKS / 2) + 1):
             tick_x = (self.canvas.width / 2) + (i * x_space_pixels)
+            negative_tick_x = (self.canvas.width / 2) - (i * x_space_pixels)
+            x_val = int(tick_x * self.grid_scale_ratio()[0])
             tick_y_center = self.canvas.height / 2
             self.canvas.create_line((tick_x, tick_y_center - 7), (tick_x, tick_y_center + 7), fill='black', tag='axes')
-            tick_x = (self.canvas.width / 2) - (i * x_space_pixels)
-            self.canvas.create_line((tick_x, tick_y_center - 7), (tick_x, tick_y_center + 7), fill='black', tag='axes')
+            self.canvas.create_line((negative_tick_x, tick_y_center - 7), (negative_tick_x, tick_y_center + 7),
+                                    fill='black', tag='axes')
+            if (i - 1) % X_AXIS_TICK_LABEL_FREQ == 0:
+                self.canvas.create_text((tick_x, tick_y_center + 15), text=x_val, tag='axes')
+                self.canvas.create_text((negative_tick_x, tick_y_center + 15), text=x_val*-1, tag='axes')
+        x_axis_unit_x = self.canvas.width - 10
+        x_axis_unit_y = (self.canvas.height / 2) - 10
+        self.canvas.create_text((x_axis_unit_x, x_axis_unit_y), text=X_AXIS_UNIT, tag='axes')
 
+        # Populate y-axis
+        y_space_pixels = int((self.canvas.height / 2) / ((Y_AXIS_TICKS / 2) + 1))
+        for i in range(1, int(Y_AXIS_TICKS / 2) + 1):
+            tick_y = (self.canvas.height / 2) - (i * y_space_pixels)
+            negative_tick_y = (self.canvas.height / 2) + (i * y_space_pixels)
+            y_val = int(tick_y * self.grid_scale_ratio()[1])
+            tick_x_center = self.canvas.width / 2
+            self.canvas.create_line((tick_x_center - 7, tick_y), (tick_x_center + 7, tick_y), fill='black', tag='axes')
+            self.canvas.create_line((tick_x_center - 7, negative_tick_y), (tick_x_center + 7, negative_tick_y),
+                                    fill='black', tag='axes')
+            if (i - 1) % Y_AXIS_TICK_LABEL_FREQ == 0:
+                self.canvas.create_text((tick_x_center - 20, tick_y), text=y_val, tag='axes')
+                self.canvas.create_text((tick_x_center - 20, negative_tick_y), text=y_val*-1, tag='axes')
 
     def grid_scale_ratio(self):
-        return self.canvas.width, GRID_WIDTH, self.canvas.height / GRID_HEIGHT
+        return self.canvas.width / GRID_WIDTH, self.canvas.height / GRID_HEIGHT
 
 
 if __name__ == '__main__':
