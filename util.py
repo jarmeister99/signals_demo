@@ -1,5 +1,5 @@
-GRID_WIDTH = 3.14 * 2
-GRID_HEIGHT = 500
+DEFAULT_GRID_WIDTH = 3.14 * 2
+DEFAULT_GRID_HEIGHT = 500
 
 X_AXIS_TICKS = 20
 X_AXIS_TICK_LABEL_FREQ = 2  # Label frequency of 2 means every other tick is labeled
