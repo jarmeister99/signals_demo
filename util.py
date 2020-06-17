@@ -1,10 +1,10 @@
 DEFAULT_GRID_WIDTH = 3.14 * 2
 DEFAULT_GRID_HEIGHT = 500
 
-X_AXIS_TICKS = 20
-X_AXIS_TICK_LABEL_FREQ = 2  # Label frequency of 2 means every other tick is labeled
+DEFAULT_X_AXIS_TICKS = 10
+X_AXIS_TICK_LABEL_FREQ = 3  # Label frequency of 2 means every other tick is labeled
 X_AXIS_UNIT = 'S'
 
-Y_AXIS_TICKS = 20
-Y_AXIS_TICK_LABEL_FREQ = 2
+DEFAULT_Y_AXIS_TICKS = 10
+Y_AXIS_TICK_LABEL_FREQ = 3
 Y_AXIS_UNIT = 'V'

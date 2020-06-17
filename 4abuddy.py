@@ -1,8 +1,9 @@
 import math
 from tkinter import *
 
-from util import X_AXIS_TICKS, X_AXIS_UNIT, Y_AXIS_TICKS, X_AXIS_TICK_LABEL_FREQ, \
-    Y_AXIS_TICK_LABEL_FREQ, Y_AXIS_UNIT, DEFAULT_GRID_HEIGHT, DEFAULT_GRID_WIDTH
+from util import X_AXIS_UNIT, X_AXIS_TICK_LABEL_FREQ, \
+    Y_AXIS_TICK_LABEL_FREQ, Y_AXIS_UNIT, DEFAULT_GRID_HEIGHT, DEFAULT_GRID_WIDTH, DEFAULT_Y_AXIS_TICKS, \
+    DEFAULT_X_AXIS_TICKS
 
 
 class ResizingCanvas(Canvas):
@@ -34,7 +35,9 @@ class App(Tk):
 
     def init_logic(self):
         self.amp_max = DEFAULT_GRID_HEIGHT
+        self.amp_ticks = DEFAULT_Y_AXIS_TICKS
         self.time_max = DEFAULT_GRID_WIDTH
+        self.time_ticks = DEFAULT_X_AXIS_TICKS
 
     def build_widgets(self):
         self.control_panel = Frame(self, borderwidth=1, relief='raised')
@@ -49,6 +52,7 @@ class App(Tk):
         control_panel_label = Label(self.control_panel, text='DEMO CONTROLS')
         control_panel_label.pack(fill=X)
 
+        # TIME ENTRY FRAME
         time_entry = Frame(self.control_panel)
         time_entry.pack(fill=X)
 
@@ -63,6 +67,7 @@ class App(Tk):
         time_entry_button = Button(time_entry, text='Enter', command=self.time_entry_button_handler)
         time_entry_button.pack(side=LEFT)
 
+        # AMPLITUDE ENTRY FRAME
         amplitude_entry = Frame(self.control_panel)
         amplitude_entry.pack(fill=X)
 
@@ -100,21 +105,21 @@ class App(Tk):
                                 fill='black', tag='axes', width=3)
 
         # Populate x-axis
-        x_space_pixels = int((self.canvas.width / 2) / ((X_AXIS_TICKS / 2) + 1))
-        x_space_units = (self.time_max / 2) / (X_AXIS_TICKS / 2)
-        for i in range(1, int(X_AXIS_TICKS / 2) + 1):
+        x_space_pixels = ((self.canvas.width / 2) - 20) / self.time_ticks
+        x_space_units = (self.time_max / 2) / (self.time_ticks / 2)
+        for i in range(1, self.time_ticks + 1):
             tick_x = (self.canvas.width / 2) + (i * x_space_pixels)
             negative_tick_x = (self.canvas.width / 2) - (i * x_space_pixels)
             x_val = round(i * x_space_units, 2)
             tick_y_center = self.canvas.height / 2
-            # axis ticks
-            self.canvas.create_line((tick_x, tick_y_center - 7), (tick_x, tick_y_center + 7), fill='black', tag='axes')
-            self.canvas.create_line((negative_tick_x, tick_y_center - 7), (negative_tick_x, tick_y_center + 7),
-                                    fill='black', tag='axes')
             # grid-spanning ticks
             self.canvas.create_line((tick_x, 0), (tick_x, self.canvas.height), fill='grey67', tag='axes')
             self.canvas.create_line((negative_tick_x, 0), (negative_tick_x, self.canvas.height), fill='grey67',
                                     tag='axes')
+            # axis ticks
+            self.canvas.create_line((tick_x, tick_y_center - 7), (tick_x, tick_y_center + 7), fill='black', tag='axes')
+            self.canvas.create_line((negative_tick_x, tick_y_center - 7), (negative_tick_x, tick_y_center + 7),
+                                    fill='black', tag='axes')
             # tick labels
             if i % X_AXIS_TICK_LABEL_FREQ == 0:
                 self.canvas.create_text((tick_x, tick_y_center + 15), text=x_val, tag='axes')
@@ -124,14 +129,17 @@ class App(Tk):
         self.canvas.create_text((x_axis_unit_x, x_axis_unit_y), text=X_AXIS_UNIT, tag='axes')
 
         # Populate y-axis
-        y_space_pixels = int((self.canvas.height / 2) / ((Y_AXIS_TICKS / 2) + 1))
-        y_space_units = (self.amp_max / 2) / (Y_AXIS_TICKS / 2)
-        for i in range(1, int(Y_AXIS_TICKS / 2) + 1):
+        y_space_pixels = ((self.canvas.height / 2) - 10) / self.amp_ticks
+        y_space_units = (self.amp_max / 2) / (self.amp_ticks / 2)
+        for i in range(1, self.amp_ticks + 1):
             tick_y = (self.canvas.height / 2) - (i * y_space_pixels)
             negative_tick_y = (self.canvas.height / 2) + (i * y_space_pixels)
             y_val = round(i * y_space_units, 2)
-            y_val = round(i * y_space_units, 2)
             tick_x_center = self.canvas.width / 2
+            # grid-spanning ticks
+            self.canvas.create_line((0, tick_y), (self.canvas.width, tick_y), fill='grey67', tag='axes')
+            self.canvas.create_line((0 - 7, negative_tick_y), (self.canvas.width, negative_tick_y),
+                                    fill='grey67', tag='axes')
             # axis ticks
             self.canvas.create_line((tick_x_center - 7, tick_y), (tick_x_center + 7, tick_y), fill='black', tag='axes')
             self.canvas.create_line((tick_x_center - 7, negative_tick_y), (tick_x_center + 7, negative_tick_y),
