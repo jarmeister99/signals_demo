@@ -99,14 +99,14 @@ class App(Tk):
         signal_2_entry_button.pack(side=LEFT, fill=X, expand=1)
 
     def canvas_release_click_handler(self, event):
-        if not self.selected_signal:
+        if not self.selected_signal or not self.signal_points[self.selected_signal]:
             return
-        self.signal_points[self.selected_signal].sort()
-        self.draw_points(self.signal_points[self.selected_signal])
-        grid_points = ([self.grid_coord(point) for point in self.signal_points[self.selected_signal]])
+        grid_points = [self.grid_coord(point) for point in self.signal_points[self.selected_signal]]
         grid_points = add_head_and_tail(grid_points, 0.5, -self.time_max, self.time_max)
-        grid_points.sort()
-        print(grid_points)
+        self.signal_points[self.selected_signal] = [self.canvas_coord(point) for point in grid_points]
+        self.signal_points[self.selected_signal].sort()
+        print(self.signal_points[self.selected_signal])
+        self.draw_points(self.signal_points[self.selected_signal])
 
     def canvas_click_drag_handler(self, event):
         if not self.selected_signal:
