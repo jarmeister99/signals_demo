@@ -114,6 +114,10 @@ class App(Tk):
         self.last_point = event.x, event.y
 
     def canvas_left_click_handler(self, event):
+        print(f'{event.x}, {event.y}')
+        new_point = self.grid_coord((event.x, event.y))
+        new_new_point = self.canvas_coord(new_point)
+        print(new_new_point)
         self.last_point = None
         if self.selected_signal:
             self.signal_points[self.selected_signal].clear()
@@ -149,6 +153,14 @@ class App(Tk):
         scale = self.grid_scale_ratio(canvas_width=padded_canvas_width, canvas_height=padded_canvas_height)
         new_x = ((point[0] - X_AXIS_PADDING) - (padded_canvas_width / 2)) / (scale[0] / 2)
         new_y = -((point[1] - Y_AXIS_PADDING) - (padded_canvas_height / 2)) / (scale[1] / 2)
+        return new_x, new_y
+
+    def canvas_coord(self, point):
+        padded_canvas_width = self.canvas.width - (X_AXIS_PADDING * 2)
+        padded_canvas_height = self.canvas.height - (Y_AXIS_PADDING * 2)
+        scale = self.grid_scale_ratio(canvas_width=padded_canvas_width, canvas_height=padded_canvas_height)
+        new_x = (point[0] * (scale[0] / 2) + (padded_canvas_width / 2) + X_AXIS_PADDING)
+        new_y = Y_AXIS_PADDING + (padded_canvas_height / 2) - (scale[1] / 2) * point[1]
         return new_x, new_y
 
     def setup_canvas(self):
