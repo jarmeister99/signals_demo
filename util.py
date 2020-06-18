@@ -17,3 +17,5 @@ Y_AXIS_PADDING = 10
 SIGNAL_1 = 1
 SIGNAL_2 = 2
 SIGNAL_COLORS = [None, 'red4', 'blue']
+
+FLOAT_EPSILON = 0.01

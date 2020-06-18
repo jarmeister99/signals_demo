@@ -1,6 +1,7 @@
 import math
 from tkinter import *
 
+from plotutil import add_head_and_tail
 from util import *
 
 
@@ -100,8 +101,12 @@ class App(Tk):
     def canvas_release_click_handler(self, event):
         if not self.selected_signal:
             return
+        self.signal_points[self.selected_signal].sort()
         self.draw_points(self.signal_points[self.selected_signal])
-        print([self.grid_coord(point) for point in self.signal_points[self.selected_signal]])
+        grid_points = ([self.grid_coord(point) for point in self.signal_points[self.selected_signal]])
+        grid_points = add_head_and_tail(grid_points, 0.5, -self.time_max, self.time_max)
+        grid_points.sort()
+        print(grid_points)
 
     def canvas_click_drag_handler(self, event):
         if not self.selected_signal:
@@ -114,10 +119,6 @@ class App(Tk):
         self.last_point = event.x, event.y
 
     def canvas_left_click_handler(self, event):
-        print(f'{event.x}, {event.y}')
-        new_point = self.grid_coord((event.x, event.y))
-        new_new_point = self.canvas_coord(new_point)
-        print(new_new_point)
         self.last_point = None
         if self.selected_signal:
             self.signal_points[self.selected_signal].clear()
