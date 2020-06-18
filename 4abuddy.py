@@ -3,7 +3,7 @@ from tkinter import *
 
 from util import X_AXIS_UNIT, X_AXIS_TICK_LABEL_FREQ, \
     Y_AXIS_TICK_LABEL_FREQ, Y_AXIS_UNIT, DEFAULT_GRID_HEIGHT, DEFAULT_GRID_WIDTH, DEFAULT_Y_AXIS_TICKS, \
-    DEFAULT_X_AXIS_TICKS
+    DEFAULT_X_AXIS_TICKS, X_AXIS_PADDING, Y_AXIS_PADDING
 
 
 class ResizingCanvas(Canvas):
@@ -44,8 +44,10 @@ class App(Tk):
         self.control_panel.pack(side=LEFT, fill=Y)
         self.build_control_panel()
 
-        self.canvas = ResizingCanvas(self, bg='grey88', highlightthickness=0)
+        self.canvas = ResizingCanvas(self, bg='grey88', highlightthickness=0, width=500, height=500)
         self.canvas.pack(side=RIGHT, fill=BOTH, expand=1)
+        self.canvas.bind('<Button-1>', self.canvas_left_click_handler)
+
         self.setup_canvas()
 
     def build_control_panel(self):
@@ -82,6 +84,24 @@ class App(Tk):
         amplitude_entry_button = Button(amplitude_entry, text='Enter', command=self.amplitude_entry_button_handler)
         amplitude_entry_button.pack(side=LEFT)
 
+        # SIGNAL ENTRY FRAME
+        signal_entry = Frame(self.control_panel)
+        signal_entry.pack(fill=X)
+
+        signal_1_entry_button = Button(signal_entry, text='Input Signal 1', command=self.signal_1_entry_button_handler)
+        signal_1_entry_button.pack(side=LEFT, fill=X, expand=1)
+        signal_2_entry_button = Button(signal_entry, text='Input Signal 2', command=self.signal_2_entry_button_handler)
+        signal_2_entry_button.pack(side=LEFT, fill=X, expand=1)
+
+    def canvas_left_click_handler(self, event):
+        new_point = self.grid_coord((event.x, event.y))
+
+    def signal_1_entry_button_handler(self):
+        pass
+
+    def signal_2_entry_button_handler(self):
+        pass
+
     def time_entry_button_handler(self):
         time_max = self.time_input.get()
         if time_max.isnumeric() and float(time_max) > 0:
@@ -94,6 +114,14 @@ class App(Tk):
             self.amp_max = round(float(amplitude_max), 2)
             self.draw_axes()
 
+    def grid_coord(self, point):
+        padded_canvas_width = self.canvas.width - (X_AXIS_PADDING * 2)
+        padded_canvas_height = self.canvas.height - (Y_AXIS_PADDING * 2)
+        scale = self.grid_scale_ratio(canvas_width=padded_canvas_width, canvas_height=padded_canvas_height)
+        new_x = ((point[0] - X_AXIS_PADDING) - (padded_canvas_width / 2)) / (scale[0] / 2)
+        new_y = -((point[1] - Y_AXIS_PADDING) - (padded_canvas_height / 2)) / (scale[1] / 2)
+        return new_x, new_y
+
     def setup_canvas(self):
         self.draw_axes()
 
@@ -105,7 +133,7 @@ class App(Tk):
                                 fill='black', tag='axes', width=3)
 
         # Populate x-axis
-        x_space_pixels = ((self.canvas.width / 2) - 20) / self.time_ticks
+        x_space_pixels = ((self.canvas.width / 2) - X_AXIS_PADDING) / self.time_ticks
         x_space_units = (self.time_max / 2) / (self.time_ticks / 2)
         for i in range(1, self.time_ticks + 1):
             tick_x = (self.canvas.width / 2) + (i * x_space_pixels)
@@ -122,14 +150,15 @@ class App(Tk):
                                     fill='black', tag='axes')
             # tick labels
             if i % X_AXIS_TICK_LABEL_FREQ == 0:
-                self.canvas.create_text((tick_x, tick_y_center + 15), text=x_val, tag='axes')
-                self.canvas.create_text((negative_tick_x, tick_y_center + 15), text=x_val * -1, tag='axes')
+                self.canvas.create_text((tick_x, tick_y_center + 15), text=x_val, fill='black', tag='axes')
+                self.canvas.create_text((negative_tick_x, tick_y_center + 15), text=x_val * -1, fill='black',
+                                        tag='axes')
         x_axis_unit_x = self.canvas.width - 10
         x_axis_unit_y = (self.canvas.height / 2) - 10
         self.canvas.create_text((x_axis_unit_x, x_axis_unit_y), text=X_AXIS_UNIT, tag='axes')
 
         # Populate y-axis
-        y_space_pixels = ((self.canvas.height / 2) - 10) / self.amp_ticks
+        y_space_pixels = ((self.canvas.height / 2) - Y_AXIS_PADDING) / self.amp_ticks
         y_space_units = (self.amp_max / 2) / (self.amp_ticks / 2)
         for i in range(1, self.amp_ticks + 1):
             tick_y = (self.canvas.height / 2) - (i * y_space_pixels)
@@ -152,8 +181,12 @@ class App(Tk):
         y_axis_unit_y = 10
         self.canvas.create_text((y_axis_unit_x, y_axis_unit_y), text=Y_AXIS_UNIT, tag='axes')
 
-    def grid_scale_ratio(self):
-        return self.canvas.width / self.time_max, self.canvas.height / self.amp_max
+    def grid_scale_ratio(self, canvas_width=None, canvas_height=None):
+        if not canvas_width:
+            canvas_width = self.canvas_width
+        if not canvas_height:
+            canvas_height = self.canvas.height
+        return canvas_width / self.time_max, canvas_height / self.amp_max
 
 
 if __name__ == '__main__':
