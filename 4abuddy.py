@@ -1,9 +1,7 @@
 import math
 from tkinter import *
 
-from util import X_AXIS_UNIT, X_AXIS_TICK_LABEL_FREQ, \
-    Y_AXIS_TICK_LABEL_FREQ, Y_AXIS_UNIT, DEFAULT_GRID_HEIGHT, DEFAULT_GRID_WIDTH, DEFAULT_Y_AXIS_TICKS, \
-    DEFAULT_X_AXIS_TICKS, X_AXIS_PADDING, Y_AXIS_PADDING
+from util import *
 
 
 class ResizingCanvas(Canvas):
@@ -39,6 +37,10 @@ class App(Tk):
         self.time_max = DEFAULT_GRID_WIDTH
         self.time_ticks = DEFAULT_X_AXIS_TICKS
 
+        self.selected_signal = None
+        self.signal_points = [None, [], []]
+        self.last_point = None
+
     def build_widgets(self):
         self.control_panel = Frame(self, borderwidth=1, relief='raised')
         self.control_panel.pack(side=LEFT, fill=Y)
@@ -47,6 +49,8 @@ class App(Tk):
         self.canvas = ResizingCanvas(self, bg='grey88', highlightthickness=0, width=500, height=500)
         self.canvas.pack(side=RIGHT, fill=BOTH, expand=1)
         self.canvas.bind('<Button-1>', self.canvas_left_click_handler)
+        self.canvas.bind('<B1-Motion>', self.canvas_click_drag_handler)
+        self.canvas.bind('<ButtonRelease-1>', self.canvas_release_click_handler)
 
         self.setup_canvas()
 
@@ -93,13 +97,38 @@ class App(Tk):
         signal_2_entry_button = Button(signal_entry, text='Input Signal 2', command=self.signal_2_entry_button_handler)
         signal_2_entry_button.pack(side=LEFT, fill=X, expand=1)
 
+    def canvas_release_click_handler(self, event):
+        if not self.selected_signal:
+            return
+        self.draw_points(self.signal_points[self.selected_signal])
+        print([self.grid_coord(point) for point in self.signal_points[self.selected_signal]])
+
+    def canvas_click_drag_handler(self, event):
+        if not self.selected_signal:
+            return
+        cur_point = event.x, event.y
+        self.signal_points[self.selected_signal].append(cur_point)
+        if self.last_point:
+            self.canvas.create_line(self.last_point, cur_point,
+                                    fill=SIGNAL_COLORS[self.selected_signal], tag=f'tag{self.selected_signal}')
+        self.last_point = event.x, event.y
+
     def canvas_left_click_handler(self, event):
-        new_point = self.grid_coord((event.x, event.y))
+        self.last_point = None
+        if self.selected_signal:
+            self.signal_points[self.selected_signal].clear()
+            self.canvas.delete(f'tag{self.selected_signal}')
 
     def signal_1_entry_button_handler(self):
+        self.last_point = None
+        self.signal_1_canvas_points = []
+        self.selected_signal = SIGNAL_1
         pass
 
     def signal_2_entry_button_handler(self):
+        self.last_point = None
+        self.signal_2_canvas_points = []
+        self.selected_signal = SIGNAL_2
         pass
 
     def time_entry_button_handler(self):
@@ -124,6 +153,18 @@ class App(Tk):
 
     def setup_canvas(self):
         self.draw_axes()
+
+    def draw_points(self, points):
+        color = None
+        if not self.selected_signal:
+            color = 'grey'
+            tag = f'tag0'
+            self.canvas.delete(tag)
+        else:
+            color = SIGNAL_COLORS[self.selected_signal]
+            tag = f'tag{self.selected_signal}'
+        for i in range(len(points) - 1):
+            self.canvas.create_line(points[i], points[i + 1], fill=color, tag=tag)
 
     def draw_axes(self):
         self.canvas.delete('axes')
