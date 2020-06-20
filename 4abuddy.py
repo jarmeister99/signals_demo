@@ -106,6 +106,7 @@ class App(Tk):
         self.signal_points[self.selected_signal] = [self.canvas_coord(point) for point in grid_points]
         self.signal_points[self.selected_signal].sort()
         print(self.signal_points[self.selected_signal])
+        self.canvas.delete(f'tag{self.selected_signal}')
         self.draw_points(self.signal_points[self.selected_signal])
 
     def canvas_click_drag_handler(self, event):
@@ -168,7 +169,6 @@ class App(Tk):
         self.draw_axes()
 
     def draw_points(self, points):
-        color = None
         if not self.selected_signal:
             color = 'grey'
             tag = f'tag0'
@@ -177,7 +177,7 @@ class App(Tk):
             color = SIGNAL_COLORS[self.selected_signal]
             tag = f'tag{self.selected_signal}'
         for i in range(len(points) - 1):
-            self.canvas.create_line(points[i], points[i + 1], fill=color, tag=tag)
+            self.canvas.create_line(points[i], points[i + 1], fill=color, tag=tag, width=2)
 
     def draw_axes(self):
         self.canvas.delete('axes')
