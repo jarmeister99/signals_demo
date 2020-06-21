@@ -109,7 +109,7 @@ class App(Tk):
         if not self.selected_signal or not self.signal_points[self.selected_signal]:
             return
         grid_points = [self.grid_coord(point) for point in self.signal_points[self.selected_signal]]
-        grid_points = add_head_and_tail(grid_points, 0.5, -self.time_max, self.time_max)
+        grid_points = add_head_and_tail(grid_points, 0.5)
         grid_points.sort()
 
         self.signal_points[self.selected_signal] = grid_points
@@ -118,18 +118,19 @@ class App(Tk):
         self.selected_signal = None
 
     def canvas_click_drag_handler(self, event):
-        if not self.selected_signal and self.grabbed_signal:
+        if not self.selected_signal:
             if self.last_point:
-                direction = event.x - self.last_point[0]
-                if direction == 0:
-                    return
-                direction = direction / abs(direction)
-                direction /= 5
-                self.signal_points[self.grabbed_signal] = [(point[0] + direction, point[1]) for point in
-                                                           self.signal_points[self.grabbed_signal]]
+                # TRANSLATES PIXEL DELTA TO GRID DELTA
+                scale = self.grid_scale_ratio()
+                pixel_difference = event.x - self.last_point[0]
+                grid_difference = pixel_difference / (scale[0] / 2)
+                ####################################################
+
+                self.signal_points[SIGNAL_2] = [(point[0] + grid_difference, point[1]) for point in
+                                                self.signal_points[SIGNAL_2]]
                 self.redraw_signals()
             self.last_point = event.x, event.y
-        else:
+        elif self.selected_signal:
             cur_point = event.x, event.y
             self.signal_points[self.selected_signal].append(cur_point)
             if self.last_point:
@@ -142,22 +143,6 @@ class App(Tk):
         if self.selected_signal:
             self.signal_points[self.selected_signal].clear()
             self.canvas.delete(f'tag{self.selected_signal}')
-        else:
-            grab_distance = 20
-            click_loc = event.x, event.y
-            clicked_signal = None
-            min_distance = None
-            for signal in self.signals:
-                if self.signal_points[signal]:
-                    for point in self.signal_points[signal]:
-                        canvas_point = self.canvas_coord(point)
-                        distance_x = abs(canvas_point[0] - click_loc[0])
-                        distance_y = abs(canvas_point[1] - click_loc[1])
-                        distance = math.sqrt(distance_x ** 2 + distance_y ** 2)
-                        if not min_distance or distance < min_distance:
-                            min_distance = distance
-                            clicked_signal = signal
-            self.grabbed_signal = clicked_signal
 
     def signal_1_entry_button_handler(self):
         self.last_point = None
@@ -186,7 +171,7 @@ class App(Tk):
     def grid_coord(self, point):
         padded_canvas_width = self.canvas.width - (X_AXIS_PADDING * 2)
         padded_canvas_height = self.canvas.height - (Y_AXIS_PADDING * 2)
-        scale = self.grid_scale_ratio(canvas_width=padded_canvas_width, canvas_height=padded_canvas_height)
+        scale = self.grid_scale_ratio()
         new_x = ((point[0] - X_AXIS_PADDING) - (padded_canvas_width / 2)) / (scale[0] / 2)
         new_y = -((point[1] - Y_AXIS_PADDING) - (padded_canvas_height / 2)) / (scale[1] / 2)
         return new_x, new_y
@@ -194,19 +179,18 @@ class App(Tk):
     def canvas_coord(self, point):
         padded_canvas_width = self.canvas.width - (X_AXIS_PADDING * 2)
         padded_canvas_height = self.canvas.height - (Y_AXIS_PADDING * 2)
-        scale = self.grid_scale_ratio(canvas_width=padded_canvas_width, canvas_height=padded_canvas_height)
+        scale = self.grid_scale_ratio()
         new_x = (point[0] * (scale[0] / 2) + (padded_canvas_width / 2) + X_AXIS_PADDING)
         new_y = Y_AXIS_PADDING + (padded_canvas_height / 2) - (scale[1] / 2) * point[1]
         return new_x, new_y
 
+    # Erases all signals from the input canvas
     def redraw_signals(self):
         self.canvas.delete('signal')
         saved_selected_signal = self.selected_signal
         for signal in self.signals:
             if self.signal_points[signal]:
                 self.selected_signal = signal
-                self.signal_points[signal] = add_head_and_tail(self.signal_points[signal], 0.5, -self.time_max,
-                                                               self.time_max)
                 self.draw_points(self.signal_points[signal])
         self.selected_signal = saved_selected_signal
 
@@ -223,7 +207,7 @@ class App(Tk):
             color = SIGNAL_COLORS[self.selected_signal]
             tag = f'tag{self.selected_signal}'
         for i in range(len(canvas_points) - 1):
-            self.canvas.create_line(canvas_points[i], canvas_points[i + 1], fill=color, tags=[tag, 'signal'], width=3)
+            self.canvas.create_line(canvas_points[i], canvas_points[i + 1], fill=color, tags=[tag, 'signal'], width=5)
 
     def draw_axes(self):
         self.canvas.delete('axes')
@@ -281,11 +265,9 @@ class App(Tk):
         y_axis_unit_y = 10
         self.canvas.create_text((y_axis_unit_x, y_axis_unit_y), text=Y_AXIS_UNIT, tag='axes')
 
-    def grid_scale_ratio(self, canvas_width=None, canvas_height=None):
-        if not canvas_width:
-            canvas_width = self.canvas_width
-        if not canvas_height:
-            canvas_height = self.canvas.height
+    def grid_scale_ratio(self):
+        canvas_width = self.canvas.width - (X_AXIS_PADDING * 2)
+        canvas_height = self.canvas.height - (Y_AXIS_PADDING * 2)
         return canvas_width / self.time_max, canvas_height / self.amp_max
 
 
