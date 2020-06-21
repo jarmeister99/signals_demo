@@ -1,7 +1,7 @@
 import math
 from tkinter import *
 
-from plotutil import add_head_and_tail
+from plotutil import add_head_and_tail, constrain_points, enforce_one_to_one
 from util import *
 
 
@@ -109,40 +109,45 @@ class App(Tk):
         if not self.selected_signal or not self.signal_points[self.selected_signal]:
             return
         grid_points = [self.grid_coord(point) for point in self.signal_points[self.selected_signal]]
-        grid_points = add_head_and_tail(grid_points, 0.5)
-        grid_points.sort()
+        enforce_one_to_one(grid_points)
+        constrain_points(grid_points)
+        add_head_and_tail(grid_points, 0.5)
 
         self.signal_points[self.selected_signal] = grid_points
         self.canvas.delete(f'tag{self.selected_signal}')
         self.draw_points(self.signal_points[self.selected_signal])
         self.selected_signal = None
 
+    def shift_signal(self, x, y):
+        if self.last_point:
+            grid_difference = (x - self.last_point[0]) / (self.grid_scale_ratio()[0] / 2)
+            self.signal_points[SIGNAL_2] = [(point[0] + grid_difference, point[1]) for point in
+                                            self.signal_points[SIGNAL_2]]
+            self.redraw_signals()
+        self.last_point = x, y
+
+    def trace_mouse(self, x, y):
+        cur_point = x, y
+        self.signal_points[self.selected_signal].append(cur_point)
+        if self.last_point:
+            self.canvas.create_line(self.last_point, cur_point,
+                                    fill=SIGNAL_COLORS[self.selected_signal], tag=f'tag{self.selected_signal}')
+        self.last_point = x, y
+
+    def begin_trace(self):
+        self.signal_points[self.selected_signal].clear()
+        self.canvas.delete(f'tag{self.selected_signal}')
+
     def canvas_click_drag_handler(self, event):
         if not self.selected_signal:
-            if self.last_point:
-                # TRANSLATES PIXEL DELTA TO GRID DELTA
-                scale = self.grid_scale_ratio()
-                pixel_difference = event.x - self.last_point[0]
-                grid_difference = pixel_difference / (scale[0] / 2)
-                ####################################################
-
-                self.signal_points[SIGNAL_2] = [(point[0] + grid_difference, point[1]) for point in
-                                                self.signal_points[SIGNAL_2]]
-                self.redraw_signals()
-            self.last_point = event.x, event.y
+            self.shift_signal(event.x, event.y)
         elif self.selected_signal:
-            cur_point = event.x, event.y
-            self.signal_points[self.selected_signal].append(cur_point)
-            if self.last_point:
-                self.canvas.create_line(self.last_point, cur_point,
-                                        fill=SIGNAL_COLORS[self.selected_signal], tag=f'tag{self.selected_signal}')
-            self.last_point = event.x, event.y
+            self.trace_mouse(event.x, event.y)
 
     def canvas_left_click_handler(self, event):
         self.last_point = None
         if self.selected_signal:
-            self.signal_points[self.selected_signal].clear()
-            self.canvas.delete(f'tag{self.selected_signal}')
+            self.begin_trace()
 
     def signal_1_entry_button_handler(self):
         self.last_point = None
