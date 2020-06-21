@@ -11,7 +11,7 @@ def add_head_and_tail(points, timestep, minval, maxval, already_sorted=False):
     head = []
     tail = []
     head.append((minval, 0))
-    if points[0][0] - timestep > 0:
+    if points[0][0] - timestep > minval:
         head.append((points[0][0] - timestep, 0))
     if points[-1][0] + timestep < maxval:
         tail.append((points[-1][0] + timestep, 0))
