@@ -1,7 +1,7 @@
 import math
 from tkinter import *
 
-from plotutil import add_head_and_tail, constrain_points, enforce_one_to_one
+from plotutil import add_head_and_tail, constrain_points, enforce_one_to_one, round_points
 from util import *
 
 
@@ -112,6 +112,7 @@ class App(Tk):
         enforce_one_to_one(grid_points)
         constrain_points(grid_points)
         add_head_and_tail(grid_points, 0.5)
+        round_points(grid_points)
 
         self.signal_points[self.selected_signal] = grid_points
         self.canvas.delete(f'tag{self.selected_signal}')
@@ -181,13 +182,13 @@ class App(Tk):
         new_y = -((point[1] - Y_AXIS_PADDING) - (padded_canvas_height / 2)) / (scale[1] / 2)
         return new_x, new_y
 
-    def canvas_coord(self, point):
+    def canvas_coord(self, point, precision=2):
         padded_canvas_width = self.canvas.width - (X_AXIS_PADDING * 2)
         padded_canvas_height = self.canvas.height - (Y_AXIS_PADDING * 2)
         scale = self.grid_scale_ratio()
         new_x = (point[0] * (scale[0] / 2) + (padded_canvas_width / 2) + X_AXIS_PADDING)
         new_y = Y_AXIS_PADDING + (padded_canvas_height / 2) - (scale[1] / 2) * point[1]
-        return new_x, new_y
+        return round(new_x, precision), round(new_y, precision)
 
     # Erases all signals from the input canvas
     def redraw_signals(self):
@@ -212,7 +213,8 @@ class App(Tk):
             color = SIGNAL_COLORS[self.selected_signal]
             tag = f'tag{self.selected_signal}'
         for i in range(len(canvas_points) - 1):
-            self.canvas.create_line(canvas_points[i], canvas_points[i + 1], fill=color, tags=[tag, 'signal'], width=5)
+            self.canvas.create_line(canvas_points[i], canvas_points[i + 1], fill=color, tags=[tag, 'signal'], width=5,
+                                    smooth=1)
 
     def draw_axes(self):
         self.canvas.delete('axes')

@@ -1,6 +1,13 @@
 from util import FLOAT_EPSILON, distance, DEFAULT_MAX_SIGNAL_POINTS
 
 
+def round_points(points, precision=2):
+    _points = points.copy()
+    for i in range(len(_points)):
+        new_point = (round(_points[i][0], precision), round(_points[i][1], precision))
+        points[i] = new_point
+
+
 def enforce_one_to_one(points):
     last_good_point = None
     _points = points.copy()
@@ -11,7 +18,6 @@ def enforce_one_to_one(points):
             points.remove(point)
         else:
             last_good_point = point
-    print(points)
 
 
 def constrain_points(points, num_points=DEFAULT_MAX_SIGNAL_POINTS, already_sorted=False):
