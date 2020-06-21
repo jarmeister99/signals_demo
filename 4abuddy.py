@@ -40,6 +40,7 @@ class App(Tk):
         self.time_ticks = DEFAULT_X_AXIS_TICKS
 
         self.selected_signal = None
+        self.grabbed_signal = None
         self.signals = [SIGNAL_1, SIGNAL_2]
         self.signal_points = [None, [], []]
         self.last_point = None
@@ -54,6 +55,7 @@ class App(Tk):
         self.canvas.bind('<Button-1>', self.canvas_left_click_handler)
         self.canvas.bind('<B1-Motion>', self.canvas_click_drag_handler)
         self.canvas.bind('<ButtonRelease-1>', self.canvas_release_click_handler)
+        self.canvas.bind('<Motion>', self.canvas_mouse_motion_handler)
 
         self.setup_canvas()
 
@@ -100,6 +102,9 @@ class App(Tk):
         signal_2_entry_button = Button(signal_entry, text='Input Signal 2', command=self.signal_2_entry_button_handler)
         signal_2_entry_button.pack(side=LEFT, fill=X, expand=1)
 
+    def canvas_mouse_motion_handler(self, event):
+        pass
+
     def canvas_release_click_handler(self, event):
         if not self.selected_signal or not self.signal_points[self.selected_signal]:
             return
@@ -113,20 +118,46 @@ class App(Tk):
         self.selected_signal = None
 
     def canvas_click_drag_handler(self, event):
-        if not self.selected_signal:
-            return
-        cur_point = event.x, event.y
-        self.signal_points[self.selected_signal].append(cur_point)
-        if self.last_point:
-            self.canvas.create_line(self.last_point, cur_point,
-                                    fill=SIGNAL_COLORS[self.selected_signal], tag=f'tag{self.selected_signal}')
-        self.last_point = event.x, event.y
+        if not self.selected_signal and self.grabbed_signal:
+            if self.last_point:
+                direction = event.x - self.last_point[0]
+                if direction == 0:
+                    return
+                direction = direction / abs(direction)
+                direction /= 5
+                self.signal_points[self.grabbed_signal] = [(point[0] + direction, point[1]) for point in
+                                                           self.signal_points[self.grabbed_signal]]
+                self.redraw_signals()
+            self.last_point = event.x, event.y
+        else:
+            cur_point = event.x, event.y
+            self.signal_points[self.selected_signal].append(cur_point)
+            if self.last_point:
+                self.canvas.create_line(self.last_point, cur_point,
+                                        fill=SIGNAL_COLORS[self.selected_signal], tag=f'tag{self.selected_signal}')
+            self.last_point = event.x, event.y
 
     def canvas_left_click_handler(self, event):
         self.last_point = None
         if self.selected_signal:
             self.signal_points[self.selected_signal].clear()
             self.canvas.delete(f'tag{self.selected_signal}')
+        else:
+            grab_distance = 20
+            click_loc = event.x, event.y
+            clicked_signal = None
+            min_distance = None
+            for signal in self.signals:
+                if self.signal_points[signal]:
+                    for point in self.signal_points[signal]:
+                        canvas_point = self.canvas_coord(point)
+                        distance_x = abs(canvas_point[0] - click_loc[0])
+                        distance_y = abs(canvas_point[1] - click_loc[1])
+                        distance = math.sqrt(distance_x ** 2 + distance_y ** 2)
+                        if not min_distance or distance < min_distance:
+                            min_distance = distance
+                            clicked_signal = signal
+            self.grabbed_signal = clicked_signal
 
     def signal_1_entry_button_handler(self):
         self.last_point = None
