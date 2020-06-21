@@ -173,6 +173,8 @@ class App(Tk):
         for signal in self.signals:
             if self.signal_points[signal]:
                 self.selected_signal = signal
+                self.signal_points[signal] = add_head_and_tail(self.signal_points[signal], 0.5, -self.time_max,
+                                                               self.time_max)
                 self.draw_points(self.signal_points[signal])
         self.selected_signal = saved_selected_signal
 
