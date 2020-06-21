@@ -110,6 +110,7 @@ class App(Tk):
         self.signal_points[self.selected_signal] = grid_points
         self.canvas.delete(f'tag{self.selected_signal}')
         self.draw_points(self.signal_points[self.selected_signal])
+        self.selected_signal = None
 
     def canvas_click_drag_handler(self, event):
         if not self.selected_signal:
