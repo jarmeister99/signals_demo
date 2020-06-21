@@ -5,19 +5,19 @@ def constrain_points(points, num_points, timestep):
     return None
 
 
-def add_head_and_tail(points, timestep, minval, maxval):
-    new_points = points.copy()
-    new_points.sort()
-    end_head = new_points[0]
-    start_tail = new_points[-1]
+def add_head_and_tail(points, timestep, minval, maxval, already_sorted=False):
+    if not already_sorted:
+        points.sort()
+    head = []
+    tail = []
     i = 0
-    while minval + (i * timestep) <= maxval:
-        candidate_x = minval + (i * timestep)
-        print(f'end_head: {end_head[0]}')
-        print(f'start_tail: {start_tail[0]}')
-        print(f'candidate: {candidate_x}')
-        if abs(new_points[i][0] - candidate_x) > FLOAT_EPSILON:
-            new_points.insert(i, (candidate_x, 0))
-        else:
-            i += 1
-    return new_points
+    while minval + (i * timestep) < points[0][0]:
+        head.append((minval + (i * timestep), 0))
+        i += 1
+    i = 1
+    tail_start = round(points[-1][0] * 2.0) / 2.0
+    while tail_start + (i * timestep) < maxval + timestep:
+        tail.append((tail_start + (i * timestep), 0))
+        i += 1
+    points = head + points + tail
+    return points

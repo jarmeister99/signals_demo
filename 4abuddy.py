@@ -24,6 +24,7 @@ class ResizingCanvas(Canvas):
         # rescale all the objects tagged with the "all" tag
         self.scale("all", 0, 0, wscale, hscale)
         self.parent.draw_axes()
+        self.parent.redraw_signals()
 
 
 class App(Tk):
@@ -39,6 +40,7 @@ class App(Tk):
         self.time_ticks = DEFAULT_X_AXIS_TICKS
 
         self.selected_signal = None
+        self.signals = [SIGNAL_1, SIGNAL_2]
         self.signal_points = [None, [], []]
         self.last_point = None
 
@@ -103,9 +105,9 @@ class App(Tk):
             return
         grid_points = [self.grid_coord(point) for point in self.signal_points[self.selected_signal]]
         grid_points = add_head_and_tail(grid_points, 0.5, -self.time_max, self.time_max)
-        self.signal_points[self.selected_signal] = [self.canvas_coord(point) for point in grid_points]
-        self.signal_points[self.selected_signal].sort()
-        print(self.signal_points[self.selected_signal])
+        grid_points.sort()
+
+        self.signal_points[self.selected_signal] = grid_points
         self.canvas.delete(f'tag{self.selected_signal}')
         self.draw_points(self.signal_points[self.selected_signal])
 
@@ -129,25 +131,25 @@ class App(Tk):
         self.last_point = None
         self.signal_1_canvas_points = []
         self.selected_signal = SIGNAL_1
-        pass
 
     def signal_2_entry_button_handler(self):
         self.last_point = None
         self.signal_2_canvas_points = []
         self.selected_signal = SIGNAL_2
-        pass
 
     def time_entry_button_handler(self):
         time_max = self.time_input.get()
         if time_max.isnumeric() and float(time_max) > 0:
             self.time_max = round(float(time_max), 2)
             self.draw_axes()
+            self.redraw_signals()
 
     def amplitude_entry_button_handler(self):
         amplitude_max = self.amplitude_input.get()
         if amplitude_max.isnumeric() and float(amplitude_max) > 0:
             self.amp_max = round(float(amplitude_max), 2)
             self.draw_axes()
+            self.redraw_signals()
 
     def grid_coord(self, point):
         padded_canvas_width = self.canvas.width - (X_AXIS_PADDING * 2)
@@ -165,10 +167,20 @@ class App(Tk):
         new_y = Y_AXIS_PADDING + (padded_canvas_height / 2) - (scale[1] / 2) * point[1]
         return new_x, new_y
 
+    def redraw_signals(self):
+        self.canvas.delete('signal')
+        saved_selected_signal = self.selected_signal
+        for signal in self.signals:
+            if self.signal_points[signal]:
+                self.selected_signal = signal
+                self.draw_points(self.signal_points[signal])
+        self.selected_signal = saved_selected_signal
+
     def setup_canvas(self):
         self.draw_axes()
 
     def draw_points(self, points):
+        canvas_points = [self.canvas_coord(point) for point in points]
         if not self.selected_signal:
             color = 'grey'
             tag = f'tag0'
@@ -176,8 +188,8 @@ class App(Tk):
         else:
             color = SIGNAL_COLORS[self.selected_signal]
             tag = f'tag{self.selected_signal}'
-        for i in range(len(points) - 1):
-            self.canvas.create_line(points[i], points[i + 1], fill=color, tag=tag, width=2)
+        for i in range(len(canvas_points) - 1):
+            self.canvas.create_line(canvas_points[i], canvas_points[i + 1], fill=color, tags=[tag, 'signal'], width=3)
 
     def draw_axes(self):
         self.canvas.delete('axes')
