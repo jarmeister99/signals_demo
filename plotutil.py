@@ -16,4 +16,4 @@ def add_head_and_tail(points, timestep, minval, maxval, already_sorted=False):
     if points[-1][0] + timestep < maxval:
         tail.append((points[-1][0] + timestep, 0))
     tail.append((maxval, 0))
-    return head + points + tail
+    return [point for point in head + points + tail if minval <= point[0] <= maxval]
